@@ -1,6 +1,8 @@
 #pragma once
 #include <math.h>
 #include <vector>
+#include <string>
+#include <fstream>
 
 #define LOG_0_1_RESOLUTION 10000
 

@@ -6,6 +6,10 @@
 #include "AbstractEvolutionaryAlgorithm.h"
 #include <chrono>
 
+
+#define STATS_AND_LINKAGE_TREE_EVERY_N_ITERATIONS 5
+#define INTRODUCE_PERCENT_OF_NEW_INDIVIDUALS 0.1
+
 using namespace std;
 class GeneticAlgorithm : public AbstractEvolutionaryAlgorithm
 {
@@ -13,7 +17,11 @@ private:
 	int param_population_size;
 	float param_cross_prob;
 	float param_mut_prob;
-	float param_choose_better_in_cross_prob;
+	float param_choose_better_in_cross_prob; // in this version it is not used
+	int param_linkage_tree_separation_size;
+	int param_linkage_tree_min_cluster;
+	int param_linkage_tree_max_cluster;
+	bool param_use_generic_tree;
 
 
 
@@ -36,7 +44,17 @@ private:
 	void print_iteration_summary();
 
 public:
-	GeneticAlgorithm(CLFLnetEvaluator *evaluator, int population_size, float cross_prob, float mut_prob, float choose_better_in_cross_prob);
+	GeneticAlgorithm(
+		CLFLnetEvaluator* evaluator,
+		int population_size,
+		float cross_prob,
+		float mut_prob,
+		float choose_better_in_cross_prob,
+		int linkage_tree_separation_size,
+		int linkage_tree_min_cluster,
+		int linkage_tree_max_cluster,
+		bool use_generic_tree
+	);
 	~GeneticAlgorithm();
 	void run_iteration();
 	vector<int> get_best_solution();

@@ -1,6 +1,16 @@
 #include "GeneticAlgorithm.h"
 
-GeneticAlgorithm::GeneticAlgorithm(CLFLnetEvaluator *evaluator, int population_size, float cross_prob, float mut_prob, float choose_better_in_cross_prob) {
+GeneticAlgorithm::GeneticAlgorithm(
+	CLFLnetEvaluator* evaluator,
+	int population_size,
+	float cross_prob,
+	float mut_prob,
+	float choose_better_in_cross_prob,
+	int linkage_tree_separation_size,
+	int linkage_tree_min_cluster,
+	int linkage_tree_max_cluster,
+	bool use_generic_tree
+) {
 	this->evaluator = evaluator;
 	this->param_population_size = population_size;
 	this->param_cross_prob = cross_prob;
@@ -8,6 +18,10 @@ GeneticAlgorithm::GeneticAlgorithm(CLFLnetEvaluator *evaluator, int population_s
 	this->param_choose_better_in_cross_prob = choose_better_in_cross_prob;	
 	this->runned_iterations = 0;
 	this->start_time = chrono::high_resolution_clock::now();
+	this->param_linkage_tree_separation_size = linkage_tree_separation_size;
+	this->param_linkage_tree_min_cluster = linkage_tree_min_cluster;
+	this->param_linkage_tree_max_cluster = linkage_tree_max_cluster;
+	this->param_use_generic_tree = use_generic_tree;
 
 	int genotype_size = evaluator->iGetNumberOfBits();
 	this->values_range = vector<int> (genotype_size);
@@ -24,7 +38,7 @@ GeneticAlgorithm::GeneticAlgorithm(CLFLnetEvaluator *evaluator, int population_s
 	this->best_individual = new Individual(*this->population[0]);
 	
 	//actualise_best_individual();
-	linkage_tree = new LinkageTree(this->values_range);
+	linkage_tree = new LinkageTree(this->values_range, linkage_tree_separation_size, linkage_tree_min_cluster, linkage_tree_max_cluster);
 	linkage_tree->build_generic_tree(*this->random_values_holder);
 }
 
@@ -68,7 +82,7 @@ void GeneticAlgorithm::run_iteration() {
 	perform_LTGA_routine();
 
 	//test!!!
-	int introduce_new_individuals = round(0.1 * this->param_population_size);
+	int introduce_new_individuals = round(INTRODUCE_PERCENT_OF_NEW_INDIVIDUALS * this->param_population_size);
 
 	for (int i = 0; i < introduce_new_individuals; i++) {
 		int individual_index = this->random_values_holder->get_random_individual_index();
@@ -76,7 +90,7 @@ void GeneticAlgorithm::run_iteration() {
 		this->population[individual_index] = new Individual(this->evaluator, random_values_holder, this->evaluator->iGetNumberOfBits());
 	}
 
-	if (this->runned_iterations % 5 == 0) {
+	if (this->runned_iterations % STATS_AND_LINKAGE_TREE_EVERY_N_ITERATIONS == 0) {
 
 		//// fo previous great results I didnt do FHIC here!!! test!!!
 		//Individual* individual_to_FHIC = this->population[0];
@@ -90,7 +104,13 @@ void GeneticAlgorithm::run_iteration() {
 
 		print_iteration_summary();
 		//linkage_tree->build_tree(get_population_genotypes(), *this->random_values_holder);
-		linkage_tree->build_generic_tree(*this->random_values_holder);
+
+		if (this->param_use_generic_tree) {
+			linkage_tree->build_generic_tree(*this->random_values_holder);
+		}
+		else {
+			linkage_tree->build_tree(get_population_genotypes(), *this->random_values_holder);
+		}
 	}
 	//this->population[0]->FHIC(10, -1);
 

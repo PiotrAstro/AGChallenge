@@ -31,12 +31,27 @@ void COptimizer::vInitialize()
 
 
 	// normal run
-	int population_size = 10;
-	float cross_prob = 0.8;
-	float mut_prob = 0.001;
-	float choose_better_in_cross_prob = 0.5;
+	int param_population_size = 10;
+	float param_cross_prob = 0.8;
+	float param_mut_prob = 0.001;
+	float param_choose_better_in_cross_prob = 0.5;
+	int param_linkage_tree_separation_size = 100;
+	int param_linkage_tree_min_cluster = 3;
+	int param_linkage_tree_max_cluster = 99;
+	bool param_use_generic_tree = true;
 
-	this->evolutionary_algorithm = new GeneticAlgorithm(&c_evaluator, population_size, cross_prob, mut_prob, choose_better_in_cross_prob);
+
+	this->evolutionary_algorithm = new GeneticAlgorithm(
+		&c_evaluator,
+		param_population_size,
+		param_cross_prob,
+		param_mut_prob,
+		param_choose_better_in_cross_prob,
+		param_linkage_tree_separation_size,
+		param_linkage_tree_min_cluster,
+		param_linkage_tree_max_cluster,
+		param_use_generic_tree
+	);
 	
 	//vector<CLFLnetEvaluator> evaluators(4);
 	//vector<GeneticAlgorithm * > algorithms(4);
