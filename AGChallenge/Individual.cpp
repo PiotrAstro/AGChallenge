@@ -169,6 +169,7 @@ void Individual::FHIC(int max_number_of_values_per_gene, int number_of_genes_to_
 bool Individual::mix_self_LinkageTree(LinkageTree& linkage_tree, vector<Individual* >& population) {
 	vector<LinkageCluster * > clusters = linkage_tree.get_clusters_ordered();
 	vector<int> previous_genotype;
+	double initial_fitness = this->fitness;
 
 	for (int i = 0; i < clusters.size() && i < 300; i++) {
 		LinkageCluster* cluster = clusters[i];
@@ -193,5 +194,12 @@ bool Individual::mix_self_LinkageTree(LinkageTree& linkage_tree, vector<Individu
 		//	this->fitness = new_fitness;
 		//	this->is_fitness_actual = true;
 		//}
+	}
+
+	if (this->fitness != initial_fitness) {
+		return true; // indicates that it has changed
+	}
+	else {
+		return false;
 	}
 }
