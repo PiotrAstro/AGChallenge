@@ -1,9 +1,45 @@
 #include "P3.h"
 
-P3::P3(CLFLnetEvaluator* evaluator, int param_FHIC_genes_checked, int param_FHIC_max_number_of_values_per_gene) {
+
+
+
+Individual P3::create_localy_optimized_individual(CLFLnetEvaluator& evaluator) {
+	CLFLnetEvaluator evaluator_copy = CLFLnetEvaluator();
+	evaluator_copy.bConfigure(evaluator.sGetNetName());
+
+	int param_population_size = 10;
+	float param_cross_prob = 0.8;
+	float param_mut_prob = 0.001;
+	float param_choose_better_in_cross_prob = 0.5;
+	int param_linkage_tree_separation_size = 100;
+	int param_linkage_tree_min_cluster = 3;
+	int param_linkage_tree_max_cluster = 99;
+	bool param_use_generic_tree = true;
+
+
+	GeneticAlgorithm evolutionary_algorithm(
+		&evaluator_copy,
+		param_population_size,
+		param_cross_prob,
+		param_mut_prob,
+		param_choose_better_in_cross_prob,
+		param_linkage_tree_separation_size,
+		param_linkage_tree_min_cluster,
+		param_linkage_tree_max_cluster,
+		param_use_generic_tree
+	);
+
+	while()
+
+}
+
+
+
+
+
+P3::P3(CLFLnetEvaluator* evaluator) {
 	this->evaluator = evaluator;
-	this->param_FHIC_genes_checked = param_FHIC_genes_checked;
-	this->param_FHIC_max_number_of_values_per_gene = param_FHIC_max_number_of_values_per_gene;
+
 	best_individual = nullptr;
 	levels = vector<P3Level* >();
 	int genotype_size = evaluator->iGetNumberOfBits();

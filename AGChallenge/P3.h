@@ -4,6 +4,13 @@
 #include "RandomValuesHolder.h"
 #include "LinkageTree.h"
 #include "AbstractEvolutionaryAlgorithm.h"
+#include "GeneticAlgorithm.h"
+
+
+#define CREATE_NEW_LOCALY_SEARCHED_INDIVIDUAL_MAX_SECONDS 60 * 10
+
+
+
 
 class P3Level {
 private:
@@ -28,9 +35,6 @@ public:
 class P3 : public AbstractEvolutionaryAlgorithm 
 {
 private:
-	int param_FHIC_genes_checked;
-	int param_FHIC_max_number_of_values_per_gene;
-
 	Individual * best_individual;
 	CLFLnetEvaluator* evaluator; // this one is passed, so it shouldnt be deleted
 	vector<int> genes_ranges;
@@ -38,10 +42,12 @@ private:
 	RandomValuesHolder * random_values_holder;
 	void check_and_actualise_best_individual(Individual* individual);
 public:
-	P3(CLFLnetEvaluator* evaluator, int param_FHIC_genes_checked, int param_FHIC_max_number_of_values_per_gene);
+	P3(CLFLnetEvaluator* evaluator);
 	~P3();
 	void run_iteration();
 	vector<int> get_best_solution();
 	double get_best_fitness();
 	Individual * get_best_individual();
+
+	static Individual create_localy_optimized_individual(CLFLnetEvaluator& evaluator);
 };

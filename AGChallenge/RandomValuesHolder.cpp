@@ -11,7 +11,8 @@ RandomValuesHolder::RandomValuesHolder(vector<int> &values_range, int population
 	this->probability_range_distribution = uniform_real_distribution<float>(0.0, 1.0);
 	set_population_size(population_size);
 
-	rand_engine = mt19937(time(0));
+	rand_engine = mt19937(std::chrono::high_resolution_clock::now().time_since_epoch().count() ^
+		std::hash<std::thread::id>()(std::this_thread::get_id()));
 }
 
 RandomValuesHolder::RandomValuesHolder(const RandomValuesHolder & other) {
@@ -19,7 +20,8 @@ RandomValuesHolder::RandomValuesHolder(const RandomValuesHolder & other) {
 	this->gene_range_distribution = uniform_int_distribution<int>(other.gene_range_distribution);
 	this->probability_range_distribution = uniform_real_distribution<float>(0.0, 1.0);
 	this->individual_range_distribution = uniform_int_distribution<int>(other.individual_range_distribution);
-	rand_engine = mt19937(time(0));
+	rand_engine = mt19937(std::chrono::high_resolution_clock::now().time_since_epoch().count() ^
+		std::hash<std::thread::id>()(std::this_thread::get_id()));
 }
 
 void RandomValuesHolder::set_population_size(int population_size) {
