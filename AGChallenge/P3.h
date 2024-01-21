@@ -5,11 +5,11 @@
 #include "LinkageTree.h"
 #include "AbstractEvolutionaryAlgorithm.h"
 #include "GeneticAlgorithm.h"
+#include <atomic>
+#include "ThreadPool.h"
 
-
-#define CREATE_NEW_LOCALY_SEARCHED_INDIVIDUAL_MAX_SECONDS 60 * 10
-
-
+#define THREADS_NUMBER 3
+#define NEW_LOCALY_SEARCHED_INDIVIDUAL_MIN_ITERATIONS 100
 
 
 class P3Level {
@@ -35,12 +35,20 @@ public:
 class P3 : public AbstractEvolutionaryAlgorithm 
 {
 private:
+	atomic<int> creating_new_individuals_finished;
+	ThreadPool * thread_pool;
+	vector<future<Individual * > > futures_Individuals;
+	int threads_number;
+
 	Individual * best_individual;
 	CLFLnetEvaluator* evaluator; // this one is passed, so it shouldnt be deleted
 	vector<int> genes_ranges;
 	vector<P3Level* > levels;
 	RandomValuesHolder * random_values_holder;
 	void check_and_actualise_best_individual(Individual* individual);
+	void run_individual_through_pyramid(Individual* individual);
+
+
 public:
 	P3(CLFLnetEvaluator* evaluator);
 	~P3();
@@ -49,5 +57,5 @@ public:
 	double get_best_fitness();
 	Individual * get_best_individual();
 
-	static Individual create_localy_optimized_individual(CLFLnetEvaluator& evaluator);
+	Individual * create_localy_optimized_individual(CLFLnetEvaluator * evaluator);
 };

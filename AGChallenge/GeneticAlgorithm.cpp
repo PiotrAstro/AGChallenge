@@ -60,7 +60,7 @@ GeneticAlgorithm::~GeneticAlgorithm() {
 
 void GeneticAlgorithm::run_iteration() {
 	this->runned_iterations++;
-	//vector<Individual * > new_population = generate_crossed_random_cluster_population_size();
+	//vector<Individual * > new_population = generate_crossed_population();
 	////new_population.reserve(this->population_size + new_population.size());
 	//for (Individual* individual : this->population) {
 	//	//new_population.push_back(individual);
@@ -68,7 +68,7 @@ void GeneticAlgorithm::run_iteration() {
 	//}
 
 	//for (int i = 0; i < new_population.size(); i++) {
-	//	new_population[i]->mutate(this->mut_prob);
+	//	new_population[i]->mutate(this->param_mut_prob);
 	//}
 	//this->population = new_population;
 
@@ -79,7 +79,16 @@ void GeneticAlgorithm::run_iteration() {
 	////}
 	// 
 	// 
-	perform_LTGA_routine();
+	// 
+	// 
+	// 
+	// 
+	
+
+
+
+	//perform_LTGA_routine();
+	perform_scatter_routine();
 
 	//test!!!
 	int introduce_new_individuals = round(INTRODUCE_PERCENT_OF_NEW_INDIVIDUALS * this->param_population_size);
@@ -103,16 +112,13 @@ void GeneticAlgorithm::run_iteration() {
 		//individual_to_FHIC->FHIC(30, -1);
 
 		print_iteration_summary();
-		//linkage_tree->build_tree(get_population_genotypes(), *this->random_values_holder);
-
-		if (this->param_use_generic_tree) {
-			linkage_tree->build_generic_tree(*this->random_values_holder);
-		}
-		else {
-			linkage_tree->build_tree(get_population_genotypes(), *this->random_values_holder);
-		}
+		//if (this->param_use_generic_tree) {
+		//	linkage_tree->build_generic_tree(*this->random_values_holder);
+		//}
+		//else {
+		//	linkage_tree->build_tree(get_population_genotypes(), *this->random_values_holder);
+		//}
 	}
-	//this->population[0]->FHIC(10, -1);
 
 	actualise_best_individual();
 }
@@ -121,6 +127,9 @@ void GeneticAlgorithm::perform_LTGA_routine() {
 	for (LinkageCluster* cluster : linkage_tree->get_clusters_ordered()) {
 		int individual_1 = get_random_individual_index_after_fight_of_2();
 		int individual_2 = get_random_individual_index_after_fight_of_2();
+		while (individual_2 == individual_1) {
+			individual_2 = get_random_individual_index_after_fight_of_2();
+		}
 
 		vector<Individual* > crossed_children = this->population[individual_1]->cross_individual_with_cluster(this->population[individual_2], *cluster);	
 		for (Individual* child : crossed_children) {
@@ -148,6 +157,54 @@ void GeneticAlgorithm::perform_LTGA_routine() {
 			delete crossed_children[better_child];
 			delete crossed_children[1 - better_child];
 		}
+
+		//if(crossed_children[0]->get_fitness() > this->population[individual_1]->get_fitness()) {
+		//	delete this->population[individual_1];
+		//	this->population[individual_1] = crossed_children[0];
+		//}
+		//else {
+		//	delete crossed_children[0];
+		//}
+
+		//if (crossed_children[1]->get_fitness() > this->population[individual_2]->get_fitness()) {
+		//	delete this->population[individual_2];
+		//	this->population[individual_2] = crossed_children[1];
+		//}
+		//else {
+		//	delete crossed_children[1];
+		//}
+	}
+}
+
+void GeneticAlgorithm::perform_scatter_routine() {
+	for (int i = 0; i < 1000; i++) {
+		int individual_1 = get_random_individual_index_after_fight_of_2();
+		int individual_2 = get_random_individual_index_after_fight_of_2();
+
+		while (individual_2 == individual_1) {
+			individual_2 = get_random_individual_index_after_fight_of_2();
+		}
+
+		vector<Individual* > crossed_children = this->population[individual_1]->cross_individual_scattered(this->population[individual_2], this->param_cross_prob);
+		for (Individual* child : crossed_children) {
+			child->mutate(this->param_mut_prob);
+		}
+
+		//// test!!!
+		//delete this->population[individual_1];
+		//if (individual_1 != individual_2) {
+		//	delete this->population[individual_2];
+		//}
+		//this->population[individual_1] = crossed_children[0];
+		//this->population[individual_2] = crossed_children[1];
+
+		// this was used for best results!!!
+		int worse_individual = this->population[individual_1]->get_fitness() < this->population[individual_2]->get_fitness() ? individual_1 : individual_2;
+		int better_child = crossed_children[0]->get_fitness() > crossed_children[1]->get_fitness() ? 0 : 1;
+
+		delete this->population[worse_individual];
+		delete crossed_children[1 - better_child];
+		this->population[worse_individual] = crossed_children[better_child];
 
 		//if(crossed_children[0]->get_fitness() > this->population[individual_1]->get_fitness()) {
 		//	delete this->population[individual_1];
@@ -348,6 +405,10 @@ vector<double> GeneticAlgorithm::fitness_quantiles(vector<float> quantiles) {
 	}
 
 	return quantiles_values;
+}
+
+int GeneticAlgorithm::get_runned_iterations() {
+	return this->runned_iterations;
 }
 
 int GeneticAlgorithm::get_population_size() {

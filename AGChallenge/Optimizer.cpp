@@ -15,24 +15,10 @@ COptimizer::COptimizer(CLFLnetEvaluator &cEvaluator)
 void COptimizer::vInitialize()
 {
 	PZ_Math::PZ_Math_Initialize();
-	/*vector<float> cross_probs = {0.2, 0.4, 0.6, 0.7, 0.8};
-	vector<float> choose_better_in_cross_probs = { 0.3, 0.5, 0.7, 0.85, 0.95};
-	vector<float> mut_probs = { 0.0001, 0.0003, 0.001, 0.003, 0.01};
-
-	ParameterSearcher::parameters_search(
-		100,
-		&c_evaluator,
-		cross_probs,
-		mut_probs,
-		choose_better_in_cross_probs
-	);*/
-
-	
-
 
 	// normal run
-	int param_population_size = 10;
-	float param_cross_prob = 0.8;
+	int param_population_size = 100;
+	float param_cross_prob = 1.0;
 	float param_mut_prob = 0.001;
 	float param_choose_better_in_cross_prob = 0.5;
 	int param_linkage_tree_separation_size = 100;
@@ -72,15 +58,14 @@ void COptimizer::vInitialize()
 	//	results[i].get();
 	//	PZ_Math::save_vector(algorithms[i]->get_best_solution(), "C:\\Piotr\\2023_studia\\semestr3\\TEP\\AG\\logs\\saved_individuals\\best_solution_" + to_string(i + 4) + ".txt");
 	//}
+
+
+
+
+
 	
 	//P3 algorithm:
-	
-	//int param_FHIC_genes_checked = -1;
-	//int param_FHIC_max_number_of_values_per_gene = 3;
-	//
-	//this->evolutionary_algorithm = new P3(&c_evaluator, param_FHIC_genes_checked, param_FHIC_max_number_of_values_per_gene);
-	
-	
+	//this->evolutionary_algorithm = new P3(&c_evaluator);
 	d_current_best_fitness = 0;
 }//void COptimizer::vInitialize()
 
@@ -97,6 +82,6 @@ void COptimizer::vRunIteration()
 
 COptimizer::~COptimizer()
 {
-	PZ_Math::PZ_Math_Destroy();
 	delete evolutionary_algorithm;
+	PZ_Math::PZ_Math_Destroy();
 }//COptimizer::~COptimizer()

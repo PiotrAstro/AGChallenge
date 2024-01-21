@@ -8,7 +8,7 @@
 
 
 #define STATS_AND_LINKAGE_TREE_EVERY_N_ITERATIONS 5
-#define INTRODUCE_PERCENT_OF_NEW_INDIVIDUALS 0.1
+#define INTRODUCE_PERCENT_OF_NEW_INDIVIDUALS 0.01
 
 using namespace std;
 class GeneticAlgorithm : public AbstractEvolutionaryAlgorithm
@@ -38,6 +38,7 @@ private:
 	vector<Individual * > generate_crossed_every_cluster_population();
 	vector<Individual* > generate_crossed_random_cluster_population_size();
 	void perform_LTGA_routine();
+	void perform_scatter_routine();
 	Individual * get_random_individual_after_fight_of_2();
 	int get_random_individual_index_after_fight_of_2();
 	vector<vector<int> * > get_population_genotypes();
@@ -63,6 +64,7 @@ public:
 	vector<double> fitness_quantiles(vector<float> quantiles);
 	double GeneticAlgorithm::get_run_time_milis();
 	Individual * get_best_individual();
+	int get_runned_iterations();
 
 	// getters of parameters
 	int get_population_size();
