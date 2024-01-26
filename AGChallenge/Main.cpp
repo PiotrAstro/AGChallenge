@@ -63,6 +63,9 @@ void main(int iArgCount, char **ppcArgValues)
 
 	CString  s_test;
 	vRunLFLExperiment("104b00");
+	//vRunLFLExperiment("114b04");
+	//vRunLFLExperiment("162b07");
+	//vRunLFLExperiment("g120b04");
 
 	/*vRunIsingSpinGlassExperiment(81, 0, i_mask_seed);
 	vRunIsingSpinGlassExperiment(81, 0, iSEED_NO_MASK);

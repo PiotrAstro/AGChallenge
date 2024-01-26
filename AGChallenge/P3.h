@@ -10,6 +10,10 @@
 
 #define THREADS_NUMBER 3
 #define NEW_LOCALY_SEARCHED_INDIVIDUAL_MIN_ITERATIONS 100
+#define NEW_LOCALY_SEARCHED_INDIVIDUAL_STOP_AFTER_NO_IMPROVEMENT_ITERATIONS 50
+#define NEW_LOCALY_SEARCHED_INDIVIDUAL_MAX_ITERATIONS 1000
+
+
 
 
 class P3Level {
@@ -46,7 +50,7 @@ private:
 	vector<P3Level* > levels;
 	RandomValuesHolder * random_values_holder;
 	void check_and_actualise_best_individual(Individual* individual);
-	void run_individual_through_pyramid(Individual* individual);
+	void run_individual_through_pyramid(Individual* individual, bool add_to_first_level);
 
 
 public:

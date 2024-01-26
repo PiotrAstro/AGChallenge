@@ -2,23 +2,21 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
+#include <queue>
 #include "RandomValuesHolder.h"
 #include "PZ_Math.h"
-
-#define DEFAULT_SEPARATION_SIZE 100  // considering matrix of 2500x2500 is to big, so I consider (2500 / SEPARATION_SIZE) * (SEPARATION_SIZE * SEPARATION_SIZE)
-// therefore I do not catch all distances, but I think that iterative approach will allow different genes to be combined with different ones 
-
-// Originally it was set to 2
-#define DEFAULT_MIN_CLUSTER_SIZE 3 // between 1 and inf, it includes clusters of this size, so it is >=
-#define DEFAULT_MAX_CLUSTER_SIZE 99 // between 1 and inf, it is included in the range, so if max is set to 100, then 100 will alsobe included
-
-
 
 using namespace std;
 
 class LinkageCluster {
 private:
 	vector<int> linked_indecies;
+
+	priority_queue<pair<float, LinkageCluster **>, vector<pair<float, LinkageCluster**> >, greater<> > * min_distance_to_clusters;  // min distance to other clusters, and pointer to them
+	int tmp_index_in_vector;
+	LinkageCluster* tmp_self_in_priority_queue;
+	void heal_tmp_min_distance();
+
 	LinkageCluster* child1;
 	LinkageCluster* child2;
 	int id;
@@ -26,7 +24,17 @@ public:
 	LinkageCluster(vector<int> linked_indecies, int id, LinkageCluster* child1, LinkageCluster* child2);
 	~LinkageCluster();
 	vector<int>& get_indecies();
+	LinkageCluster* get_child1();
+	LinkageCluster* get_child2();
 	int get_id();
+
+	//tmp:
+	void clear_distance_data();
+	void add_tmp_distance(float tmp_distance, LinkageCluster* tmp_min_distance_to);
+	void set_tmp_index_in_vector(int tmp_index_in_vector);
+	float get_tmp_min_distance();
+	LinkageCluster* get_tmp_min_distance_to();
+	int get_tmp_index_in_vector();
 };
 
 class LinkageTree
@@ -45,6 +53,7 @@ class LinkageTree
 		LinkageTree(vector<int> & genes_ranges);
 		LinkageTree(vector<int>& genes_ranges, int separation_size, int min_cluster_size, int max_cluster_size);
 		~LinkageTree();
+		LinkageCluster* get_cluster_of_whole_genotype();
 		void build_tree(const vector<vector<int> * > & genotypes, RandomValuesHolder& random_values_holder);  // it is effective, it cheks with flag if it has to actualise self
 		void build_generic_tree(RandomValuesHolder& random_values_holder); // builds generic tree, simply doesnt take linkage information into account
 		vector<LinkageCluster* > & get_clusters_ordered();

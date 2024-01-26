@@ -5,18 +5,26 @@
 Individual * P3::create_localy_optimized_individual(CLFLnetEvaluator * evaluator) {
 	this->creating_new_individuals_finished.fetch_add(1);
 
-	CLFLnetEvaluator evaluator_copy = CLFLnetEvaluator();
-	evaluator_copy.bConfigure(evaluator->sGetNetName());
-
-	int param_population_size = 10;
-	float param_cross_prob = 0.8;
+	// params:
+	int param_population_size = 100;
+	float param_cross_prob = 1.0;
 	float param_mut_prob = 0.001;
 	float param_choose_better_in_cross_prob = 0.5;
 	int param_linkage_tree_separation_size = 100;
 	int param_linkage_tree_min_cluster = 3;
 	int param_linkage_tree_max_cluster = 99;
 	bool param_use_generic_tree = true;
+	bool param_verbose = false;
+	// end of params
 
+
+
+	int no_improvement_for_n_iterations = 0;
+	double best_fitness = 0;
+
+
+	CLFLnetEvaluator evaluator_copy = CLFLnetEvaluator();
+	evaluator_copy.bConfigure(evaluator->sGetNetName());
 
 	GeneticAlgorithm evolutionary_algorithm(
 		&evaluator_copy,
@@ -27,11 +35,23 @@ Individual * P3::create_localy_optimized_individual(CLFLnetEvaluator * evaluator
 		param_linkage_tree_separation_size,
 		param_linkage_tree_min_cluster,
 		param_linkage_tree_max_cluster,
-		param_use_generic_tree
+		param_use_generic_tree,
+		param_verbose
 	);
 
-	while (evolutionary_algorithm.get_runned_iterations() < NEW_LOCALY_SEARCHED_INDIVIDUAL_MIN_ITERATIONS) {
+	while (
+		evolutionary_algorithm.get_runned_iterations() < NEW_LOCALY_SEARCHED_INDIVIDUAL_MIN_ITERATIONS ||
+		evolutionary_algorithm.get_runned_iterations() > NEW_LOCALY_SEARCHED_INDIVIDUAL_MAX_ITERATIONS ||
+		no_improvement_for_n_iterations > NEW_LOCALY_SEARCHED_INDIVIDUAL_STOP_AFTER_NO_IMPROVEMENT_ITERATIONS)
+	{
 		evolutionary_algorithm.run_iteration();
+		if (evolutionary_algorithm.get_best_fitness() > best_fitness) {
+			best_fitness = evolutionary_algorithm.get_best_fitness();
+			no_improvement_for_n_iterations = 0;
+		}
+		else {
+			no_improvement_for_n_iterations++;
+		}
 	}
 
 	this->creating_new_individuals_finished.fetch_sub(1);
@@ -51,26 +71,45 @@ P3::P3(CLFLnetEvaluator* evaluator) {
 	this->evaluator = evaluator;
 	this->threads_number = THREADS_NUMBER;
 	this->thread_pool = new ThreadPool(this->threads_number);
-
-	creating_new_individuals_finished = 0;
-
-	best_individual = nullptr;
 	levels = vector<P3Level* >();
+
 	int genotype_size = evaluator->iGetNumberOfBits();
-	genes_ranges = vector<int> (genotype_size);
+	genes_ranges = vector<int>(genotype_size);
 	for (int i = 0; i < genes_ranges.size(); i++) {
 		genes_ranges[i] = evaluator->iGetNumberOfValues(i);
 	}
-	random_values_holder = new RandomValuesHolder(genes_ranges, 1);
+	this->random_values_holder = new RandomValuesHolder(genes_ranges, 1);
+	best_individual = new Individual(this->evaluator, this->random_values_holder, this->genes_ranges.size());
 
-	for (int i = 0; i < this->threads_number; i++) {
-		futures_Individuals.emplace_back(
-			this->thread_pool->enqueue([this]() {
-					return this->create_localy_optimized_individual(this->evaluator);
-				}
-			)
-		);
+	// tmp!!!
+
+	vector<Individual* > loaded_individuals = vector<Individual* >(0);
+	vector<vector<int>* > original_genotypes = vector<vector<int> * >(0);
+	for (int i = 0; i < 26; i++) {
+		loaded_individuals.push_back(new Individual(this->evaluator, this->random_values_holder, this->evaluator->iGetNumberOfBits()));
+		loaded_individuals[loaded_individuals.size() - 1]->load_from_csv("C:\\Piotr\\2023_studia\\semestr3\\TEP\\AG\\logs\\saved_individuals\\best_solution_" + to_string(i) + ".txt");
+		original_genotypes.push_back(loaded_individuals[loaded_individuals.size() - 1]->get_original_genotype());
 	}
+
+	levels.push_back(new P3Level(*loaded_individuals[0], &genes_ranges, *random_values_holder));
+	delete loaded_individuals[0];
+	for (int i = 1; i < loaded_individuals.size(); i++) {
+		levels[0]->add_individual(*loaded_individuals[i]);
+		delete loaded_individuals[i];
+	}
+
+	// end tmp
+
+	creating_new_individuals_finished = 0;
+
+	//for (int i = 0; i < this->threads_number; i++) {
+	//	futures_Individuals.emplace_back(
+	//		this->thread_pool->enqueue([this]() {
+	//				return this->create_localy_optimized_individual(this->evaluator);
+	//			}
+	//		)
+	//	);
+	//}
 }
 
 void P3::run_iteration() {
@@ -83,50 +122,53 @@ void P3::run_iteration() {
 		levels.push_back(new P3Level(*individuals[0], &genes_ranges, *random_values_holder));
 		delete individuals[0];
 		for (int i = 1; i < individuals.size(); i++) {
-			run_individual_through_pyramid(individuals[i]);
+			run_individual_through_pyramid(individuals[i], true);
 			delete individuals[i];
 		}
 	}
 	else {
-		if (creating_new_individuals_finished.load() > 0) {
-			Individual * random_individual_from_0_level = levels[0]->get_population()[
+		//if (creating_new_individuals_finished.load() > 0) {
+			Individual * random_individual_from_0_level = new Individual(*levels[0]->get_population()[
 				levels[0]->get_random_values_holder()->get_random_individual_index()
-			]; // do not delete - it is in the population, so while deleting population it will be deleted
+			]); // do not delete - it is in the population, so while deleting population it will be deleted
 
-			run_individual_through_pyramid(random_individual_from_0_level);
-		}
-		else {
-			vector<Individual * > individuals = vector<Individual * >();
-			for (int i = 0; i < futures_Individuals.size(); ++i) {
-				individuals.push_back(futures_Individuals[i].get());
-			}
+			run_individual_through_pyramid(random_individual_from_0_level, false);
+			delete random_individual_from_0_level;
+		//}
+		//else {
+		//	vector<Individual * > individuals = vector<Individual * >();
+		//	for (int i = 0; i < futures_Individuals.size(); ++i) {
+		//		individuals.push_back(futures_Individuals[i].get());
+		//	}
 
-			for (int i = 0; i < individuals.size(); i++) {
-				run_individual_through_pyramid(individuals[i]);
-				delete individuals[i];
-			}
+		//	for (int i = 0; i < individuals.size(); i++) {
+		//		run_individual_through_pyramid(individuals[i], true);
+		//		delete individuals[i];
+		//	}
 
-			int run_number_of_threads = this->threads_number - 1;
-			for (int i = 0; i < run_number_of_threads; i++) {
-				futures_Individuals.emplace_back(
-					this->thread_pool->enqueue([this]() {
-							return this->create_localy_optimized_individual(this->evaluator);
-						}
-					)
-				);
-			}
-		}
+		//	int run_number_of_threads = this->threads_number - 1;
+		//	for (int i = 0; i < run_number_of_threads; i++) {
+		//		futures_Individuals.emplace_back(
+		//			this->thread_pool->enqueue([this]() {
+		//					return this->create_localy_optimized_individual(this->evaluator);
+		//				}
+		//			)
+		//		);
+		//	}
+		//}
 	}
 }
 
-void P3::run_individual_through_pyramid(Individual* individual) {
+void P3::run_individual_through_pyramid(Individual* individual, bool add_to_first_level) {
 	check_and_actualise_best_individual(individual);
 
-	bool add_to_next_level = true;
+	bool add_to_next_level = add_to_first_level;
 	for (int i = 0; i < levels.size(); i++) {
 		Individual individual_copy = Individual(*individual);
 		individual->set_random_values_holder(levels[i]->get_random_values_holder());
-		individual->mix_self_LinkageTree(levels[i]->get_linkage_tree(), levels[i]->get_population());
+		//individual->mix_self_LinkageTree(levels[i]->get_linkage_tree(), levels[i]->get_population());
+		// I changed to take linkage tree from level 0 !!!
+		individual->mix_self_LinkageTree(levels[0]->get_linkage_tree(), levels[i]->get_population());
 
 		if (add_to_next_level) {
 			levels[i]->add_individual(individual_copy);
@@ -245,6 +287,7 @@ void P3Level::self_actualise_linkage_tree() {
 	if (linkage_tree != nullptr) {
 		delete linkage_tree;
 	}
+
 	vector<vector<int> * > genotypes = vector<vector<int> * >();
 	genotypes.reserve(population.size());
 	for (int i = 0; i < population.size(); i++) {

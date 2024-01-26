@@ -17,27 +17,29 @@ void COptimizer::vInitialize()
 	PZ_Math::PZ_Math_Initialize();
 
 	// normal run
-	int param_population_size = 100;
-	float param_cross_prob = 1.0;
-	float param_mut_prob = 0.001;
-	float param_choose_better_in_cross_prob = 0.5;
-	int param_linkage_tree_separation_size = 100;
-	int param_linkage_tree_min_cluster = 3;
-	int param_linkage_tree_max_cluster = 99;
-	bool param_use_generic_tree = true;
+	//int param_population_size = 100;
+	//float param_cross_prob = 1.0;
+	//float param_mut_prob = 0.001;
+	//float param_choose_better_in_cross_prob = 0.0;
+	//int param_linkage_tree_separation_size = c_evaluator.iGetNumberOfBits();
+	//int param_linkage_tree_min_cluster = 2;
+	//int param_linkage_tree_max_cluster = param_linkage_tree_separation_size - 1;
+	//bool param_use_generic_tree = false;
+	//bool param_verbose = true;
 
 
-	this->evolutionary_algorithm = new GeneticAlgorithm(
-		&c_evaluator,
-		param_population_size,
-		param_cross_prob,
-		param_mut_prob,
-		param_choose_better_in_cross_prob,
-		param_linkage_tree_separation_size,
-		param_linkage_tree_min_cluster,
-		param_linkage_tree_max_cluster,
-		param_use_generic_tree
-	);
+	//this->evolutionary_algorithm = new GeneticAlgorithm(
+	//	&c_evaluator,
+	//	param_population_size,
+	//	param_cross_prob,
+	//	param_mut_prob,
+	//	param_choose_better_in_cross_prob,
+	//	param_linkage_tree_separation_size,
+	//	param_linkage_tree_min_cluster,
+	//	param_linkage_tree_max_cluster,
+	//	param_use_generic_tree,
+	//	param_verbose
+	//);
 	
 	//vector<CLFLnetEvaluator> evaluators(4);
 	//vector<GeneticAlgorithm * > algorithms(4);
@@ -64,8 +66,8 @@ void COptimizer::vInitialize()
 
 
 	
-	//P3 algorithm:
-	//this->evolutionary_algorithm = new P3(&c_evaluator);
+	//PZ algorithm:
+	this->evolutionary_algorithm = new PZ_algorithm(&c_evaluator);
 	d_current_best_fitness = 0;
 }//void COptimizer::vInitialize()
 

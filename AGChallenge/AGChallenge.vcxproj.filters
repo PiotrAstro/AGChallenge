@@ -78,6 +78,9 @@
     <ClCompile Include="RandomValuesHolder.cpp">
       <Filter>PZ\general</Filter>
     </ClCompile>
+    <ClCompile Include="PZ_algorithm.cpp">
+      <Filter>PZ\Evolutionary_Algorithms</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Timer.h">
@@ -130,6 +133,9 @@
     </ClInclude>
     <ClInclude Include="RandomValuesHolder.h">
       <Filter>PZ\general</Filter>
+    </ClInclude>
+    <ClInclude Include="PZ_algorithm.h">
+      <Filter>PZ\Evolutionary_Algorithms</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

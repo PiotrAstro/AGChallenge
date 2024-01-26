@@ -6,6 +6,7 @@
 #include <vector>
 #include "GeneticAlgorithm.h"
 #include "ParameterSearcher.h"
+#include "PZ_algorithm.h"
 #include "P3.h"
 
 using namespace std;

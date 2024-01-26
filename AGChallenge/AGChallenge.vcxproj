@@ -155,6 +155,7 @@
     <ClCompile Include="Optimizer.cpp" />
     <ClCompile Include="P3.cpp" />
     <ClCompile Include="ParameterSearcher.cpp" />
+    <ClCompile Include="PZ_algorithm.cpp" />
     <ClCompile Include="PZ_Math.cpp" />
     <ClCompile Include="RandomValuesHolder.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="Optimizer.h" />
     <ClInclude Include="P3.h" />
     <ClInclude Include="ParameterSearcher.h" />
+    <ClInclude Include="PZ_algorithm.h" />
     <ClInclude Include="PZ_Math.h" />
     <ClInclude Include="RandomValuesHolder.h" />
     <ClInclude Include="ThreadPool.h" />

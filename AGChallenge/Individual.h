@@ -3,6 +3,8 @@
 #include "RandomValuesHolder.h"
 #include <fstream>
 #include "LinkageTree.h"
+#include <sstream>
+#include <queue>
 
 using namespace std;
 
@@ -16,8 +18,10 @@ private:
 	CLFLnetEvaluator * evaluator; // this one is passed, so it shouldnt be deleted
 public:
 	Individual(CLFLnetEvaluator * evaluator, RandomValuesHolder * random_values_holder, int genotype_size);
-	Individual(Individual const &other);
+	Individual(const Individual &other);
+	void load_from_csv(string filename);
 	void set_random_values_holder(RandomValuesHolder * random_values_holder);
+	void set_evaluator(CLFLnetEvaluator * evaluator);
 	~Individual();
 
 	// P3 operators
@@ -31,5 +35,19 @@ public:
 	vector<Individual * > cross_individual(Individual* individual_2, float cross_prob); //returns array of 2 individuals
 	vector<Individual* > cross_individual_scattered(Individual* individual_2, float cross_prob);
 	vector<Individual* > cross_individual_with_cluster(Individual* individual_2, LinkageCluster & cluster); //returns array of 2 individuals
+	
+	vector<Individual* > cross_individual_with_tree_randomly(
+		Individual* individual_2,
+		LinkageTree& tree,
+		float change_genes_prob,
+		float stop_considering_child_clusters_prob
+	); //returns array of 2 individuals
+
+	Individual* cross_individual_with_tree_greedy(
+		Individual* individual_2,
+		LinkageTree & tree,
+		float choose_randomly_prob,
+		float stop_considering_child_clusters_prob
+	); //returns array of 2 individuals
 };
 
