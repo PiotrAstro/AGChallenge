@@ -21,10 +21,49 @@ LinkageTree::LinkageTree(vector<int>& genes_ranges, int separation_size, int min
 	this->param_max_cluster_size = max_cluster_size;
 }
 
-void LinkageTree::build_tree(const vector<vector<int> * > & genotypes, RandomValuesHolder& random_values_holder) {
+void LinkageTree::clean_self() {
+	usable_clusters_ordered.clear();
 	if (cluster_of_whole_genotype != nullptr) {
+		queue< pair<LinkageCluster*, LinkageCluster* > > clusters_to_consider;
+		clusters_to_consider.push(
+			make_pair(
+				this->cluster_of_whole_genotype->get_child1(),
+				this->cluster_of_whole_genotype->get_child2()
+			)
+		);
 		delete cluster_of_whole_genotype;
+
+		while (clusters_to_consider.size() > 0) {
+			LinkageCluster* clusters_1 = clusters_to_consider.front().first;
+			LinkageCluster* clusters_2 = clusters_to_consider.front().second;
+			clusters_to_consider.pop();
+
+			// adding children to the queue
+			if (clusters_1 != nullptr) {
+				clusters_to_consider.push(
+					make_pair(
+						clusters_1->get_child1(),
+						clusters_1->get_child2()
+					)
+				);
+				delete clusters_1;
+			}
+
+			if (clusters_2 != nullptr) {
+				clusters_to_consider.push(
+					make_pair(
+						clusters_2->get_child1(),
+						clusters_2->get_child2()
+					)
+				);
+				delete clusters_2;
+			}
+		}
 	}
+}
+
+void LinkageTree::build_tree(const vector<vector<int> * > & genotypes, RandomValuesHolder& random_values_holder)  {
+	clean_self();
 
 	// initial actions
 	int new_clusters_counter = 0;
@@ -305,11 +344,8 @@ void LinkageTree::build_tree(const vector<vector<int> * > & genotypes, RandomVal
 	);
 }
 
-
 void LinkageTree::build_generic_tree(RandomValuesHolder& random_values_holder) {
-	if (cluster_of_whole_genotype != nullptr) {
-		delete cluster_of_whole_genotype;
-	}
+	clean_self();
 
 	// initial actions
 	int new_clusters_counter = 0;
@@ -368,9 +404,7 @@ void LinkageTree::build_generic_tree(RandomValuesHolder& random_values_holder) {
 }
 
 LinkageTree::~LinkageTree() {
-	if (cluster_of_whole_genotype != nullptr) {
-		delete cluster_of_whole_genotype;
-	}
+	clean_self();
 }
 
 int LinkageTree::get_distance_id(LinkageCluster* cluster1, LinkageCluster* cluster2) {
@@ -415,13 +449,6 @@ LinkageCluster::LinkageCluster(vector<int> indecies, int id, LinkageCluster* chi
 }
 
 LinkageCluster::~LinkageCluster() {
-	if (child1 != nullptr) {
-		delete child1;
-	}
-	if (child2 != nullptr) {
-		delete child2;
-	}
-
 	if (this->min_distance_to_clusters != nullptr) {
 		delete this->min_distance_to_clusters;
 	}

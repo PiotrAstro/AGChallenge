@@ -25,6 +25,7 @@ GeneticAlgorithm::GeneticAlgorithm(
 	this->param_linkage_tree_max_cluster = linkage_tree_max_cluster;
 	this->param_use_generic_tree = use_generic_tree;
 	this->best_individuals_counter = 1;
+	this->last_improvement_iteration = 0;
 
 	int genotype_size = evaluator->iGetNumberOfBits();
 	this->values_range = vector<int> (genotype_size);
@@ -62,6 +63,7 @@ GeneticAlgorithm::~GeneticAlgorithm() {
 	}
 
 	delete this->random_values_holder;
+	delete this->linkage_tree;
 
 	if (this->param_verbose) {
 		cout << "GeneticAlgorithm deleted" << endl;
@@ -82,19 +84,7 @@ void GeneticAlgorithm::run_iteration() {
 	//run_iteration_LTGA(loaded_individuals);
 }
 
-void GeneticAlgorithm::run_iteration_LTGA(vector<Individual * > individuals_to_add) {  // individuals to add were copied previousy, so I should take care of deleting them or taking them freely
-	this->runned_iterations++;
-
-	// this one is test
-	int introduce_new_individuals = round(INTRODUCE_PERCENT_OF_NEW_INDIVIDUALS * this->param_population_size);
-	for (int i = 0; i < introduce_new_individuals; i++) {
-		int individual_index = get_random_individual_index_not_the_only_best();
-		delete this->population[individual_index];
-		this->population[individual_index] = new Individual(this->evaluator, random_values_holder, this->evaluator->iGetNumberOfBits());
-	}
-
-
-	// this one will be done for sure
+void GeneticAlgorithm::insert_individuals(vector<Individual* > individuals_to_add) {
 	for (Individual* individual : individuals_to_add) {
 		individual->set_evaluator(this->evaluator);
 		individual->set_random_values_holder(this->random_values_holder);
@@ -102,9 +92,45 @@ void GeneticAlgorithm::run_iteration_LTGA(vector<Individual * > individuals_to_a
 		delete this->population[individual_index];
 		this->population[individual_index] = individual;
 	}
+}
 
-	perform_LTGA_routine();
-	//perform_scatter_routine();  // tmp test!!!
+void GeneticAlgorithm::run_iteration_LTGA() {  // probably scatter inside!!!
+	this->runned_iterations++;
+
+	// this one is test
+	int introduce_new_individuals = round(INTRODUCE_PERCENT_OF_NEW_INDIVIDUALS * this->param_population_size);
+	//int introduce_new_individuals = round((0.1 - mean_population_entropy()) * 20);
+	//if (introduce_new_individuals > 20) {
+	//	introduce_new_individuals = 20;
+	//}
+	//else if (introduce_new_individuals < 1) {
+	//	introduce_new_individuals = 1;
+	//}
+	introduce_n_new_individuals(introduce_new_individuals);
+
+	if (this->runned_iterations - this->last_improvement_iteration > RESET_POPULATION_AFTER_NO_IMPROVEMENT_FOR) {
+		introduce_n_new_individuals(this->param_population_size);
+		this->last_improvement_iteration = this->runned_iterations;
+	}
+
+	perform_LTGA_routine();  // probably scatter inside!!!
+	//vector<Individual* > new_population = generate_crossed_population();
+	//for (int i = 0; i < this->param_population_size; i++) {
+	//	delete this->population[i];
+	//	new_population[i]->mutate(this->param_mut_prob);
+	//	this->population[i] = new_population[i];
+	//}
+
+	//if (this->runned_iterations % LTGA_FHIC_EVERY_N_ITERATIONS == 0) {
+	//	bool stop = false;
+	//	for (int i = 0; i < this->param_population_size && !stop; i++) {
+	//		if (this->population[i]->get_fitness() >= this->best_individual->get_fitness()) {
+	//			this->population[i]->FHIC(FHIC_TRY_N_GENE_VALUES, -1);
+	//			stop = true;
+	//		}
+	//	}
+	//}
+
 	actualise_best_individual();
 
 	if (this->runned_iterations % STATS_AND_LINKAGE_TREE_EVERY_N_ITERATIONS == 0) {
@@ -126,15 +152,24 @@ void GeneticAlgorithm::run_iteration_LTGA(vector<Individual * > individuals_to_a
 	}
 }
 
-void GeneticAlgorithm::run_iteration_scattered() {
-	this->runned_iterations++;
-
-	int introduce_new_individuals = round(INTRODUCE_PERCENT_OF_NEW_INDIVIDUALS * this->param_population_size);
+void GeneticAlgorithm::introduce_n_new_individuals(int introduce_new_individuals) {
 	for (int i = 0; i < introduce_new_individuals; i++) {
 		int individual_index = get_random_individual_index_not_the_only_best();
 		delete this->population[individual_index];
 		this->population[individual_index] = new Individual(this->evaluator, random_values_holder, this->evaluator->iGetNumberOfBits());
 	}
+}
+
+void GeneticAlgorithm::run_iteration_scattered() {
+	this->runned_iterations++;
+
+	int introduce_new_individuals = round(INTRODUCE_PERCENT_OF_NEW_INDIVIDUALS * this->param_population_size);
+	introduce_n_new_individuals(introduce_new_individuals);
+
+	//if (this->runned_iterations - this->last_improvement_iteration > RESET_POPULATION_AFTER_NO_IMPROVEMENT_FOR) {
+	//	introduce_n_new_individuals(this->param_population_size);
+	//	this->last_improvement_iteration = this->runned_iterations;
+	//}
 
 	perform_scatter_routine();
 	actualise_best_individual();
@@ -149,7 +184,7 @@ void GeneticAlgorithm::run_iteration_scattered() {
 	}
 }
 
-void GeneticAlgorithm::perform_LTGA_routine() {
+void GeneticAlgorithm::perform_LTGA_routine() {  // I probably do here scatter!!!
 	for (int i = 0; i < LTGA_ROUTINE_CROSSES_PER_ITERATION; i++) {
 		int individual_1 = get_random_individual_index_after_fight_of_2();
 		int individual_2 = get_random_individual_index_after_fight_of_2();
@@ -160,23 +195,35 @@ void GeneticAlgorithm::perform_LTGA_routine() {
 
 		// for fully random use:
 
-		vector<Individual* > crossed_children = this->population[individual_1]->cross_individual_with_tree_randomly(
-			this->population[individual_2],
-			*this->linkage_tree,
-			TREE_CROSS_RANDOM_CHANGE_GENES_PROB,
-			TREE_CROSS_STOP_DELVING_DEEPER_PROB
-		);
+		//vector<Individual* > crossed_children = this->population[individual_1]->cross_individual_with_tree_randomly(
+		//	this->population[individual_2],
+		//	*this->linkage_tree,
+		//	TREE_CROSS_RANDOM_CHANGE_GENES_PROB,
+		//	TREE_CROSS_STOP_DELVING_DEEPER_PROB
+		//);
 
-		for (Individual* child : crossed_children) {
-			child->mutate(this->param_mut_prob);
-		}
+		//this is test!!! it is actually scatter!!!
+		//vector<Individual* > crossed_children = this->population[individual_1]->cross_individual_scattered(this->population[individual_2], this->param_cross_prob);
 
-		int worse_individual = this->population[individual_1]->get_fitness() < this->population[individual_2]->get_fitness() ? individual_1 : individual_2;
-		int better_child = crossed_children[0]->get_fitness() > crossed_children[1]->get_fitness() ? 0 : 1;
+		//for (Individual* child : crossed_children) {
+		//	child->mutate(this->param_mut_prob);
+		//}
 
-		delete this->population[worse_individual];
-		delete crossed_children[1 - better_child];
-		this->population[worse_individual] = crossed_children[better_child];
+		//delete this->population[individual_1];
+		//delete this->population[individual_2];
+		//this->population[individual_1] = crossed_children[0];
+		//this->population[individual_2] = crossed_children[1];
+
+		//int worse_individual = this->population[individual_1]->get_fitness() < this->population[individual_2]->get_fitness() ? individual_1 : individual_2;
+		//int better_child = crossed_children[0]->get_fitness() > crossed_children[1]->get_fitness() ? 0 : 1;
+
+		//if (this->random_values_holder->get_random_probability() <= LTGA_CHILD_FHIC_PROB) {
+		//	crossed_children[better_child]->FHIC(FHIC_TRY_N_GENE_VALUES, -1);
+		//}
+
+		//delete this->population[worse_individual];
+		//delete crossed_children[1 - better_child];
+		//this->population[worse_individual] = crossed_children[better_child];
 		
 		// for greedy use:
 
@@ -186,12 +233,17 @@ void GeneticAlgorithm::perform_LTGA_routine() {
 		//		TREE_CROSS_GREEDY_CHOOSE_RANDOMLY_PROB,
 		//		TREE_CROSS_STOP_DELVING_DEEPER_PROB
 		//	);
-		//crossed_child->mutate(this->param_mut_prob);
+		Individual* crossed_child = this->population[individual_1]->cross_individual_scattered_greedy(
+			this->population[individual_2],
+			this->param_cross_prob,
+			(this->random_values_holder->get_random_probability() <= LTGA_CHILD_PROB_FHIC_WITH_CROSSED ? 1.0 : 0.0)
+		);
+		crossed_child->mutate(this->param_mut_prob);
 
-		//int worse_individual = this->population[individual_1]->get_fitness() < this->population[individual_2]->get_fitness() ? individual_1 : individual_2;
+		int worse_individual = this->population[individual_1]->get_fitness() < this->population[individual_2]->get_fitness() ? individual_1 : individual_2;
 
-		//delete this->population[worse_individual];
-		//this->population[worse_individual] = crossed_child;
+		delete this->population[worse_individual];
+		this->population[worse_individual] = crossed_child;
 	}
 }
 
@@ -366,6 +418,7 @@ void GeneticAlgorithm::actualise_best_individual() {
 			this->best_individual = new Individual(*this->population[i]);
 
 			this->best_individuals_counter = 1;
+			this->last_improvement_iteration = this->runned_iterations;
 		}
 		else if (this->population[i]->get_fitness() == this->best_individual->get_fitness()) {
 			this->best_individuals_counter++;
@@ -406,23 +459,31 @@ double GeneticAlgorithm::get_best_fitness() {
 
 
 double GeneticAlgorithm::mean_population_entropy() {
-	double entropy_sum = 0;
-
-	for (int i = 0; i < this->values_range.size(); i++) {
-		vector <int> values_count = vector<int>(this->values_range[i]);
-		for (int j = 0; j < this->param_population_size; j++) {
-			values_count[this->population[j]->get_genotype()[i]]++;
-		}
-
-		for (int j = 0; j < this->values_range[i]; j++) {
-			float probability = (float)values_count[j] / (float)this->param_population_size;
-			entropy_sum -= (double)PZ_Math::prob_mul_log(probability);
-		}
-	}
-
-	return entropy_sum / (double)this->values_range.size();
+	return mean_population_entropy(population);
 }
 
+double GeneticAlgorithm::mean_population_entropy(const vector<Individual* > & individuals) {
+	if (individuals.size() > 0) {
+		double entropy_sum = 0;
+		int genes_number = individuals[0]->get_original_genotype()->size();
+
+		for (int i = 0; i < genes_number; i++) {
+			vector <int> values_count = vector<int>(individuals[0]->get_evaluator()->iGetNumberOfValues(i));
+			for (int j = 0; j < individuals.size(); j++) {
+				values_count[individuals[j]->get_original_genotype()->at(i)]++;
+			}
+
+			for (int j = 0; j < values_count.size(); j++) {
+				float probability = (float)values_count[j] / (float)individuals.size();
+				entropy_sum -= (double)PZ_Math::prob_mul_log(probability);
+			}
+		}
+		return entropy_sum / (double)genes_number;
+	}
+	else {
+		return 0;
+	}
+}
 
 vector<double> GeneticAlgorithm::fitness_quantiles(vector<float> quantiles) {
 	vector<double> fitnesses = vector<double> (this->param_population_size);

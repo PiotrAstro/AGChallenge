@@ -67,7 +67,7 @@ void COptimizer::vInitialize()
 
 	
 	//PZ algorithm:
-	this->evolutionary_algorithm = new PZ_algorithm(&c_evaluator);
+	this->evolutionary_algorithm = new PZ_Meta_Algorithm(&c_evaluator);
 	d_current_best_fitness = 0;
 }//void COptimizer::vInitialize()
 

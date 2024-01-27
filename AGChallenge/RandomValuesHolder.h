@@ -25,6 +25,7 @@ class RandomValuesHolder
 		int get_random_individual_index();
 		int get_random_gene_index();
 		int get_random_gene_value(int gene_index);
+		int get_random_int_from_0_to_n(int n);
 
 		template <typename T>
 		void shuffle_vector(vector<T>& to_shuffle) {

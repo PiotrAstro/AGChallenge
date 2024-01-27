@@ -29,13 +29,15 @@ public:
 	bool mix_self_LinkageTree(LinkageTree& linkage_tree, vector<Individual* >& population); // returns true if individual was changed, false otherwise
 	// normal operators
 	void mutate(float mut_prob);
+	CLFLnetEvaluator* get_evaluator();
 	double get_fitness();
 	vector<int> get_genotype();
 	vector<int> * get_original_genotype();
 	vector<Individual * > cross_individual(Individual* individual_2, float cross_prob); //returns array of 2 individuals
 	vector<Individual* > cross_individual_scattered(Individual* individual_2, float cross_prob);
 	vector<Individual* > cross_individual_with_cluster(Individual* individual_2, LinkageCluster & cluster); //returns array of 2 individuals
-	
+	Individual* Individual::cross_individual_scattered_greedy(Individual* individual_2, float cross_prob, float check_gene_prob);
+
 	vector<Individual* > cross_individual_with_tree_randomly(
 		Individual* individual_2,
 		LinkageTree& tree,

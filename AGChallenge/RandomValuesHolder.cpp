@@ -47,3 +47,7 @@ int RandomValuesHolder::get_random_gene_value(int gene_index) {
 	return this->values_range_distribution[gene_index](this->rand_engine);
 }
 
+int RandomValuesHolder::get_random_int_from_0_to_n(int n) {
+	uniform_int_distribution<int> range_to_n = uniform_int_distribution<int> (0, n);
+	return range_to_n(this->rand_engine);
+}

@@ -81,6 +81,9 @@
     <ClCompile Include="PZ_algorithm.cpp">
       <Filter>PZ\Evolutionary_Algorithms</Filter>
     </ClCompile>
+    <ClCompile Include="PZ_Meta_Algorithm.cpp">
+      <Filter>PZ\Evolutionary_Algorithms</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Timer.h">
@@ -135,6 +138,9 @@
       <Filter>PZ\general</Filter>
     </ClInclude>
     <ClInclude Include="PZ_algorithm.h">
+      <Filter>PZ\Evolutionary_Algorithms</Filter>
+    </ClInclude>
+    <ClInclude Include="PZ_Meta_Algorithm.h">
       <Filter>PZ\Evolutionary_Algorithms</Filter>
     </ClInclude>
   </ItemGroup>

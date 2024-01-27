@@ -29,6 +29,10 @@ void Individual::set_evaluator(CLFLnetEvaluator* evaluator) {
 	this->evaluator = evaluator;
 }
 
+CLFLnetEvaluator* Individual::get_evaluator() {
+	return evaluator;
+}
+
 void Individual::mutate(float mut_prob) {
 	int mutated_genes = 0;
 	for (int i = 0; i < this->genotype.size(); i++) {
@@ -123,6 +127,48 @@ vector<Individual*> Individual::cross_individual_scattered(Individual* individua
 	}
 
 	return children;
+}
+
+Individual* Individual::cross_individual_scattered_greedy(Individual* individual_2, float cross_prob, float check_gene_prob) {
+	vector<Individual* > children = cross_individual_scattered(individual_2, cross_prob);
+
+	Individual* final_child;
+	Individual* other;
+	if (children[0]->get_fitness() > children[1]->get_fitness()) {
+		final_child = children[0];
+		other = children[1];
+	}
+	else {
+		final_child = children[1];
+		other = children[0];
+	}
+
+	if (cross_prob != 0.0) {
+		vector<int> genes_indecies = vector<int>(genotype.size());
+		for (int i = 0; i < genotype.size(); i++) {
+			genes_indecies[i] = i;
+		}
+
+		random_values_holder->shuffle_vector(genes_indecies);
+
+		for (int i : genes_indecies) {
+			if (this->random_values_holder->get_random_probability() <= check_gene_prob) {
+				int previous_gene_value = final_child->genotype[i];
+				double previous_fitness = final_child->get_fitness();
+				final_child->genotype[i] = other->genotype[i];
+				final_child->is_fitness_actual = false;
+
+				if (final_child->get_fitness() <= previous_fitness) {
+					final_child->genotype[i] = previous_gene_value;
+					final_child->fitness = previous_fitness;
+				}
+			}
+		}
+	}
+
+	delete other;
+
+	return final_child;
 }
 
 void Individual::load_from_csv(string filename) {
@@ -362,6 +408,7 @@ Individual* Individual::cross_individual_with_tree_greedy(
 		float stop_considering_child_clusters_prob)
 {
 	Individual * child = new Individual(*this);
+	bool have_to_accept_new_child = true;
 	queue< pair<LinkageCluster*, LinkageCluster* > > clusters_to_consider;
 	clusters_to_consider.push(
 		make_pair(
@@ -399,26 +446,38 @@ Individual* Individual::cross_individual_with_tree_greedy(
 			child->is_fitness_actual = false;
 		}
 		else {
-			Individual* child_tmp_version = new Individual(*child);
+			Individual* child_tmp_1_version = new Individual(*child);
+			Individual* child_tmp_2_version = new Individual(*child);
 
 			for (int gene_index : clusters_1->get_indecies()) {
-				child->genotype[gene_index] = this->genotype[gene_index];
-				child_tmp_version->genotype[gene_index] = individual_2->genotype[gene_index];
+				child_tmp_1_version->genotype[gene_index] = this->genotype[gene_index];
+				child_tmp_2_version->genotype[gene_index] = individual_2->genotype[gene_index];
 			}
 
 			for (int gene_index : clusters_2->get_indecies()) {
-				child->genotype[gene_index] = individual_2->genotype[gene_index];
-				child_tmp_version->genotype[gene_index] = this->genotype[gene_index];
+				child_tmp_1_version->genotype[gene_index] = individual_2->genotype[gene_index];
+				child_tmp_2_version->genotype[gene_index] = this->genotype[gene_index];
 			}
-			child->is_fitness_actual = false;
-			child_tmp_version->is_fitness_actual = false;
-			if (child->get_fitness() < child_tmp_version->get_fitness()) {
+			child_tmp_1_version->is_fitness_actual = false;
+			child_tmp_2_version->is_fitness_actual = false;
+
+			if ((child_tmp_1_version->get_fitness() >= child->get_fitness() || have_to_accept_new_child) &&
+				child_tmp_1_version->get_fitness() >= child_tmp_2_version->get_fitness()) {
+				delete child_tmp_2_version;
 				delete child;
-				child = child_tmp_version;
+				child = child_tmp_1_version;
+			}
+			else if (child_tmp_2_version->get_fitness() >= child->get_fitness() || have_to_accept_new_child) {
+				delete child_tmp_1_version;
+				delete child;
+				child = child_tmp_2_version;
 			}
 			else {
-				delete child_tmp_version;
+				delete child_tmp_1_version;
+				delete child_tmp_2_version;
 			}
+
+			have_to_accept_new_child = false;
 		}
 
 

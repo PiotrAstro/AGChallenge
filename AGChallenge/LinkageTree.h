@@ -24,8 +24,8 @@ public:
 	LinkageCluster(vector<int> linked_indecies, int id, LinkageCluster* child1, LinkageCluster* child2);
 	~LinkageCluster();
 	vector<int>& get_indecies();
-	LinkageCluster* get_child1();
-	LinkageCluster* get_child2();
+	LinkageCluster* get_child1();  // do not delete! tree will delete it
+	LinkageCluster* get_child2();  // do not delete! tree will delete it
 	int get_id();
 
 	//tmp:
@@ -44,7 +44,7 @@ class LinkageTree
 		int param_min_cluster_size;
 		int param_max_cluster_size;
 
-
+		void clean_self();
 		vector<LinkageCluster* > usable_clusters_ordered;
 		LinkageCluster* cluster_of_whole_genotype;
 		vector< int > genes_range;
