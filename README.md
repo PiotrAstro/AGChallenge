@@ -20,16 +20,16 @@ This implementation has several layers:
 - meta algorithm - restarts Island model when stuck
 
 It works more or less like that:
-!(images/GA_scheme.png)
+![GA scheme](images/GA_scheme.png)
 
 The problem works like that
-!(images/problem1.png)
+![One pair of nodes](images/problem1.png)
 We have a graph and few possible routes from one node to the other
 
-!(images/problem2)
+![Two pairs of nodes](images/problem2.png)
 There are many connections. Our task is to choose best combination of routes indices:
 
-!(images/problem3.png)
+![Discrete problem structure](images/problem3.png)
 there are e.g. about 2000 nodes that we have to connect, for each one we choose an index of a predefined route. It is then evaluated using some fancy methods based on failure resistance and similar metrics.
 
 The problem itself is was implemented by Phd. Michał Przewoźniczek.
